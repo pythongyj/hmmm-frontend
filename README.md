@@ -3,7 +3,7 @@
 ## 项目运行
 
 ```bash
-git clone https://github.com/lipengzhou/hmmm-frontend.git
+git clone https://github.com/pythongyj/hmmm-frontend.git
 
 # 进入你的项目中
 cd hmmm-frontend
