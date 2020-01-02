@@ -2,10 +2,10 @@
   <div class="dashboard-container">
     <div class="app-container">
        <el-card class="upCard">
-      <div style="margin-bottom:10px;">
+      <el-row slot="header">
       <el-button type="primary">新增试题</el-button>
       <el-button type="primary">批量导入</el-button>
-      </div>
+      </el-row>
       <el-form  label-position='left' label-width="70px" :inline="true" size="mini">
               <el-form-item label="学科">
             <el-select  style='width:60%' v-model="searchForm.subjectID" placeholder="请选择">
@@ -65,8 +65,8 @@
             <el-input  v-model="searchForm.direction" style='width:60%' placeholder="请输入"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button>清除</el-button>
-            <el-button type="primary">搜索</el-button>
+            <el-button @click='clear'>清除</el-button>
+            <el-button @click='search' type="primary">搜索</el-button>
           </el-form-item>
       </el-form>
     </el-card>
@@ -76,7 +76,7 @@
         <el-tab-pane label="待审核" name="second"></el-tab-pane>
         <el-tab-pane label="已审核" name="third"></el-tab-pane>
       </el-tabs>
-      <el-table style="width: 100%" :data="list">
+      <el-table style="width: 100%" :data="currentList">
       <el-table-column prop='id' label="序号" >
       </el-table-column>
       <el-table-column prop='number' label="试题编号" >
@@ -88,6 +88,11 @@
       <el-table-column prop='question' label="题干">
       </el-table-column>
       <el-table-column  prop='addDate' label="录入时间">
+        <template slot-scope="obj">
+          {{
+          obj.row.addDate | parseTimeByString
+          }}
+        </template>
       </el-table-column>
       <el-table-column prop='creatorID' label="录入人">
       </el-table-column>
@@ -102,13 +107,22 @@
       <el-table-column :formatter='pubState' prop='publishState'  label="发布状态">
       </el-table-column>
       <el-table-column label="操作">
+        <template slot-scope="obj">
         <el-button size='small' type="text">预览</el-button>
-        <el-button size='small' type="text">下架</el-button>
+        <el-button @click='upOrDown(obj.row.id)' size='small' type="text">下架</el-button>
         <el-button size='small' type="text">修改</el-button>
-        <el-button size='small' type="text">删除</el-button>
+        <el-button @click='delItem(obj.row.id)' size='small' type="text">删除</el-button>
+        </template>
       </el-table-column>
     </el-table>
-    
+    <el-row type="flex" justify="center" align="middle">
+      <el-pagination
+  :current-page='page.currentPage' :page-size='page.pageSize'
+  background
+  layout="prev, pager, next"
+  :total="page.total">
+</el-pagination>
+    </el-row>
     </el-card>
     </div>
    
@@ -116,15 +130,21 @@
 </template>
 
 <script>
-import { choice } from '../../api/hmmm/questions'
+import { choice,choicePublish,remove } from '../../api/hmmm/questions'
 import { simple } from '../../api/hmmm/subjects'
 import { provinces,citys } from '../../api/hmmm/citys'
+import { parseTimeByString  } from '../../filters/index'
 import { status,difficulty,questionType,direction,chkType,publishType } from '../../api/hmmm/constants'
 export default {
   name: 'QuestionsChoice',
   data() {
     return {
       value:'',
+      page:{
+        currentPage:1,
+        pageSize:10,
+        total:0
+      },
       activeName:'first',
       searchForm:{
         subjectID:'',
@@ -155,14 +175,62 @@ export default {
       citys:[]
     }
   },
+  computed: {
+    currentList() {
+      if (this.activeName === "first") return this.list.map(item => item);
+      else if (this.activeName === "second")
+        return this.list.filter(
+          item => item.publishState === 0 || item.publishState === 2
+        );
+      else return this.list.filter(item => item.publishState === 1);
+    }
+  },
+
   methods:{
+    search(){
+      this.page.currentPage =1
+      this.getcondition()
+    },
+    //清除
+    clear(){
+      this.searchForm={
+        subjectID:'',
+        status:'',
+        difficulty:'',
+        questionType:'',
+        direction:'',
+        chkType:'',
+        tags:'',
+        shortName:'',
+        creatorID:'',
+        provinces:'',
+        citys:'',
+        remarks:'',
+        keyword:'',
+        twoLevelDirectory:'',
+        publishType:'',
+      }
+    },
     subject(row, column, cellValue, index){
-      this.subjectOptions.forEach(item =>{
-        // console.log(item);
-        if (item.value == cellValue) {
-           let cellValue =  item.label
-        }
+       let res= this.subjectOptions.filter(item=>{
+         return item.value ==cellValue
+       })
+       return  res.length ? res[0].label : '未知'
+    },
+    //删除该条
+    delItem(id){
+      this.$confirm('Are you sure to delete this item?').then(res=>{
+        remove({ id })
+      this.$message({ type: "success", message: "删除成功" });
+      this.getcondition()
       })
+    },
+    //是否下架
+    upOrDown(id){
+      this.$confirm('Are you sure to upOrDown?').then(res=>{
+        choicePublish({ id })    //这里的参数 data 为一个对象
+      })
+      this.getcondition()
     },
     checkState(row, column, cellValue, index){
       if (cellValue == 0) {
@@ -212,10 +280,19 @@ export default {
         return '未知'
       }
     },
-    getQuestionList(){
-      choice().then(res=>{
+    getcondition(){
+      let params ={
+        page:this.page.currentPage,
+        pagesize:this.page.pageSize,
+        ...this.searchForm
+      }
+      this.getQuestionList(params)
+    },
+    getQuestionList(data){
+      choice(data).then(res=>{
         // console.log(res.data.items);
         this.list=res.data.items
+        this.page.total=res.data.counts
       })
     },
     getSubjectOptions(){
@@ -230,6 +307,9 @@ export default {
     getArea(){
       this.citys=citys(this.searchForm.provinces)
     }
+  },
+  watch:{
+    deep:true,
   },
   filters:{
     filterStatus:function(value){
