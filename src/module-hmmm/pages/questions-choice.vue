@@ -110,7 +110,7 @@
         <template slot-scope="obj">
         <el-button size='small' type="text">预览</el-button>
         <el-button @click='upOrDown(obj.row.id)' size='small' type="text">下架</el-button>
-        <el-button size='small' type="text">修改</el-button>
+        <el-button @click='modify(obj.row.id)' size='small' type="text">修改</el-button>
         <el-button @click='delItem(obj.row.id)' size='small' type="text">删除</el-button>
         </template>
       </el-table-column>
@@ -187,6 +187,10 @@ export default {
   },
 
   methods:{
+    //修改
+    modify(id) {
+      this.$router.push({ path: "/questions/new", query: { id } });
+    },
     search(){
       this.page.currentPage =1
       this.getcondition()
