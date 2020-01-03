@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard-container">
-    <div class="app-container">目录管理</div>
+    <div class="app-container">目录管理132</div>
   </div>
 </template>
 
