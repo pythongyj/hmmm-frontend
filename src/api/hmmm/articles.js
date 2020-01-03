@@ -1,8 +1,8 @@
 /*
  * @Author: taoshiwei
  * @Date: 2019-04-09 14:39:32
- * @Last Modified by: taoshiwei
- * @Last Modified time: 2019-04-29 15:16:53
+ * @Last Modified by: 葛运杰
+ * @Last Modified time: 2020-01-02 22:57:30
  *
  * 文章
  */
@@ -29,4 +29,4 @@ export const remove = data => createAPI(`/articles/${data.id}`, 'delete', data)
 
 // 文章状态
 export const state = data =>
-  createAPI(`/articles/${data.id}/state`, 'post', data)
+  createAPI(`/articles/${data.id}/${data.state}`, 'post', data)
