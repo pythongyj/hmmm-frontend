@@ -16,7 +16,7 @@
           </el-form-item>
           <el-form-item>
             <el-button class="marginLeft" @click="clid">清除</el-button>
-            <el-button class="bgcolor" style="color:#fff">搜索</el-button>
+            <el-button class="bgcolor" @click="search" style="color:#fff">搜索</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -42,7 +42,11 @@
         </el-table>
         <!-- 分页 -->
         <el-row type="flex" justify="end" style="margin:30px 0px">
-          <el-pagination background layout="prev, pager, next" :total="100"></el-pagination>
+          <el-pagination background layout="prev, pager, next"
+           :total="page.total"
+           :current-page="page.currentPage"
+           :page-size="page.pageSize"
+          ></el-pagination>
         </el-row>
       </el-card>
     </div>
@@ -61,20 +65,34 @@ export default {
         state:null
       },
       list:[],
-      status
+      status,
+      page:{
+        currentPage:1,
+        pageSize:10,
+        total:0
+      }
     }
   },
   methods:{
+    search(){
+      this.page.currentPage=1,
+      this.gain(this.fromData)
+    },
     clid(){
+      this.gain()
       this.fromData={
         directoryName:"",
         status:null
       }
     },
-    gain(){
-      list().then(res=>{
-        this.list=res.data
+    async gain(data){
+      let res=await list({
+        page:this.page.currentPage,
+        pagesize:this.page.pageSize,
+        ...data
       })
+      this.list=res.data
+      this.page.total=res.data.counts
     }
   },
   created(){
