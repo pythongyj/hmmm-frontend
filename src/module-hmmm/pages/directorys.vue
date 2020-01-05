@@ -36,7 +36,7 @@
             <template slot-scope="obj">
               <el-button type="text">修改</el-button>
             <el-button type="text">{{obj.row.state===1?"禁用":"开启"}}</el-button>
-            <el-button type="text">删除</el-button>
+            <el-button type="text" @click="delItem(obj.row.id)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -54,8 +54,9 @@
 </template>
 
 <script>
-import { list } from "../../api/hmmm/directorys"
+import { list , remove } from "../../api/hmmm/directorys"
 import { status } from "../../api/hmmm/constants"
+
 export default {
   name: 'DirectorysList',
   data() {
@@ -74,6 +75,12 @@ export default {
     }
   },
   methods:{
+    async delItem(id){
+     await this.$confirm("您确定要删除此目录吗？")
+     await remove({ id })
+     this.$message({  message:"删除成功",type:"success" })
+     this.search()
+    },
     search(){
       this.page.currentPage=1,
       this.gain(this.fromData)
